@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>岁月印记 · 银发生命叙事档案</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-glow page-glow-left" aria-hidden="true"></div>
+  <div class="page-glow page-glow-right" aria-hidden="true"></div>
+
+  <div class="site-shell">
+    <header class="site-header panel reveal">
+      <div class="brand-lockup">
+        <div class="brand-seal">岁月</div>
+        <div>
+          <p class="brand-kicker">银发生命叙事档案</p>
+          <h2>elder life archive</h2>
+        </div>
+      </div>
+
+      <div class="header-tools">
+        <p>默认中文 · FastAPI 后端 · LangChain + FAISS · 图片 / 视频导入</p>
+        <button class="ghost-button is-hidden" id="refresh-btn" type="button">刷新数据</button>
+        <div class="user-session is-hidden" id="user-session">
+          <span id="user-display">未登录</span>
+          <button class="ghost-button" id="logout-btn" type="button">退出登录</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="auth-stage" id="auth-stage">
+      <div class="auth-panel panel reveal">
+        <div class="auth-copy">
+          <p class="eyebrow">数字生命对话 · RAG知识库系统 · 档案智能问答</p>
+          <h1>先完成注册登录，再进入银发档案与数字生命对话工作台。</h1>
+          <p class="hero-lead">
+            系统会把人物摘要、愿望、时间线、图片与视频素材组织成档案知识库，
+            通过 LangChain + FAISS 完成向量检索，再基于检索结果生成中文回答。
+          </p>
+
+          <div class="auth-feature-grid">
+            <article class="auth-feature-card">
+              <p class="story-label">一站式建档</p>
+              <h3>文本、图片、视频统一整理</h3>
+              <p>创建档案时即可上传图片和视频，卡片封面、详情图库与时间线同步更新。</p>
+            </article>
+            <article class="auth-feature-card">
+              <p class="story-label">智能问答</p>
+              <h3>基于档案内容进行数字生命对话</h3>
+              <p>问题会先做 embedding，再进入 FAISS 检索，答案严格围绕当前档案内容生成。</p>
+            </article>
+            <article class="auth-feature-card">
+              <p class="story-label">本地部署</p>
+              <h3>默认中文界面，适合项目演示</h3>
+              <p>后端使用 Python FastAPI，接口简洁，后续可以继续替换成外部大模型服务。</p>
+            </article>
+          </div>
+
+          <div class="rag-flow">
+            <div class="rag-flow-group">
+              <p class="section-kicker">档案入库流程</p>
+              <div class="rag-flow-row">
+                <span>档案文本</span>
+                <span>embedding</span>
+                <span>向量数据库</span>
+                <span>问答检索</span>
+              </div>
+            </div>
+            <div class="rag-flow-group">
+              <p class="section-kicker">对话生成流程</p>
+              <div class="rag-flow-row">
+                <span>用户问题</span>
+                <span>embedding</span>
+                <span>向量检索</span>
+                <span>生成答案</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-card">
+          <div class="auth-switch" role="tablist" aria-label="登录注册切换">
+            <button class="auth-tab active" id="login-tab" type="button" data-auth-mode="login">登录</button>
+            <button class="auth-tab" id="register-tab" type="button" data-auth-mode="register">注册</button>
+          </div>
+
+          <form id="login-form" class="auth-form" autocomplete="on">
+            <div class="panel-heading auth-heading">
+              <div>
+                <p class="section-kicker">欢迎回来</p>
+                <h3>登录工作台</h3>
+              </div>
+              <p>登录后可查看档案、上传素材并发起数字生命对话。</p>
+            </div>
+
+            <label>
+              <span>用户名</span>
+              <input name="username" type="text" maxlength="24" placeholder="例如：demo_user" required>
+            </label>
+
+            <label>
+              <span>密码</span>
+              <input name="password" type="password" minlength="6" placeholder="请输入密码" required>
+            </label>
+
+            <button class="primary-button form-submit" type="submit">立即登录</button>
+          </form>
+
+          <form id="register-form" class="auth-form is-hidden" autocomplete="on">
+            <div class="panel-heading auth-heading">
+              <div>
+                <p class="section-kicker">首次使用</p>
+                <h3>注册新账号</h3>
+              </div>
+              <p>用户名用于登录，显示名称会展示在页面右上角。</p>
+            </div>
+
+            <label>
+              <span>显示名称</span>
+              <input name="displayName" type="text" maxlength="24" placeholder="例如：项目管理员">
+            </label>
+
+            <label>
+              <span>用户名</span>
+              <input name="username" type="text" maxlength="24" placeholder="3-24位字母、数字、下划线或中划线" required>
+            </label>
+
+            <label>
+              <span>密码</span>
+              <input name="password" type="password" minlength="6" placeholder="至少 6 位" required>
+            </label>
+
+            <label>
+              <span>确认密码</span>
+              <input name="confirmPassword" type="password" minlength="6" placeholder="再次输入密码" required>
+            </label>
+
+            <button class="primary-button form-submit" type="submit">注册并进入系统</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <main class="layout is-hidden" id="app-shell">
+      <section class="hero panel reveal">
+        <div class="hero-copy">
+          <p class="eyebrow">多模态叙事 · 数字反哺 · 五社联动</p>
+          <h1>让长者的人生经验，不只被记录，也能被看见、被回访、被继续传递。</h1>
+          <p class="hero-lead">
+            当前版本已经支持前端注册登录、档案卡片精致化展示、图片与视频导入、
+            以及基于档案内容的智能问答。你可以将叙事资料沉淀为可检索、可对话的数字生命档案。
+          </p>
+
+          <div class="hero-actions">
+            <a class="primary-button" href="#composer">新建档案</a>
+            <button class="secondary-button" id="view-sample-btn" type="button">查看示例</button>
+          </div>
+        </div>
+
+        <div class="hero-aside">
+          <article class="story-panel">
+            <p class="story-label">本轮升级</p>
+            <ul>
+              <li>前端新增注册 / 登录入口和用户状态栏</li>
+              <li>后端切换为 FastAPI，并接入 LangChain + FAISS</li>
+              <li>详情抽屉新增数字生命对话面板</li>
+            </ul>
+          </article>
+
+          <article class="quote-card">
+            <p class="quote-label">设计方向</p>
+            <p class="quote-body">档案不再只是表单数据，而是一张有温度、有画面感、也能够被继续追问的生命卡片。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="metrics reveal" id="metrics"></section>
+
+      <section class="panel reveal rag-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">五、RAG知识库系统</p>
+            <h3>用于实现：数字生命对话</h3>
+          </div>
+          <p>技术栈：LangChain + FAISS · 基于档案内容进行智能问答</p>
+        </div>
+
+        <div class="rag-showcase">
+          <article class="rag-showcase-card">
+            <p class="detail-label">知识入库</p>
+            <h4>档案文本 → embedding → 向量数据库 → 问答检索</h4>
+            <p>人物摘要、愿望、时间线、支持网络、图片与视频名称会被拆分后写入向量索引。</p>
+          </article>
+          <article class="rag-showcase-card">
+            <p class="detail-label">对话生成</p>
+            <h4>用户问题 → embedding → 向量检索 → 生成答案</h4>
+            <p>问答结果会附带检索来源，确保回答尽量贴合当前档案，不脱离已归档内容。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <div class="workspace-main">
+          <section class="panel toolbar reveal">
+            <div class="toolbar-head">
+              <div>
+                <p class="section-kicker">档案库</p>
+                <h3>生命叙事总览</h3>
+              </div>
+              <p class="result-meta" id="result-meta">正在加载档案...</p>
+            </div>
+
+            <div class="toolbar-controls">
+              <label class="search-field" for="search-input">
+                <span>检索</span>
+                <input
+                  id="search-input"
+                  type="search"
+                  placeholder="搜索姓名、社区、主题标签或愿望"
+                  autocomplete="off"
+                >
+              </label>
+
+              <label class="sort-field" for="sort-select">
+                <span>排序</span>
+                <select id="sort-select">
+                  <option value="recent">最近更新</option>
+                  <option value="age-desc">年龄从高到低</option>
+                  <option value="timeline-desc">生命节点优先</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="tag-strip" id="tag-strip" aria-label="标签筛选"></div>
+          </section>
+
+          <section class="archive-grid" id="archive-grid" aria-live="polite"></section>
+        </div>
+
+        <aside class="workspace-side">
+          <section class="panel composer reveal" id="composer">
+            <div class="panel-heading">
+              <div>
+                <p class="section-kicker">新建档案</p>
+                <h3>录入一位长者的生命故事</h3>
+              </div>
+              <p>建档时即可附带图片和视频。</p>
+            </div>
+
+            <form id="create-form" class="stack-form">
+              <div class="field-row">
+                <label>
+                  <span>姓名</span>
+                  <input name="name" type="text" maxlength="20" placeholder="例如：张桂兰" required>
+                </label>
+                <label>
+                  <span>年龄</span>
+                  <input name="age" type="number" min="50" max="110" placeholder="78" required>
+                </label>
+              </div>
+
+              <div class="field-row">
+                <label>
+                  <span>籍贯</span>
+                  <input name="hometown" type="text" maxlength="30" placeholder="例如：四川·广元">
+                </label>
+                <label>
+                  <span>所在社区</span>
+                  <input name="community" type="text" maxlength="40" placeholder="例如：成都玉林街道">
+                </label>
+              </div>
+
+              <label>
+                <span>身份角色</span>
+                <input name="role" type="text" maxlength="30" placeholder="例如：退休教师 / 纺织工人">
+              </label>
+
+              <label>
+                <span>故事摘要</span>
+                <textarea
+                  name="summary"
+                  rows="3"
+                  maxlength="220"
+                  placeholder="用两三句话概括这位长者的人生轨迹、性格或独特经验"
+                ></textarea>
+              </label>
+
+              <label>
+                <span>当前愿望</span>
+                <textarea
+                  name="wish"
+                  rows="2"
+                  maxlength="120"
+                  placeholder="例如：想学会和外孙视频，也想把会做的菜谱留下来"
+                ></textarea>
+              </label>
+
+              <div class="field-row">
+                <label>
+                  <span>主题标签</span>
+                  <input name="tags" type="text" maxlength="80" placeholder="口述史，家庭记忆，数字融入">
+                </label>
+                <label>
+                  <span>支持网络</span>
+                  <input name="supporters" type="text" maxlength="80" placeholder="社区社工，大学生志愿者，家人">
+                </label>
+              </div>
+
+              <label>
+                <span>档案色调</span>
+                <select name="tone">
+                  <option value="amber">暖铜晨光</option>
+                  <option value="jade">松石纸本</option>
+                  <option value="rose">晚霞留影</option>
+                </select>
+              </label>
+
+              <div class="upload-stack">
+                <label class="upload-field">
+                  <span>导入图片</span>
+                  <input id="create-images" name="images" type="file" accept="image/*" multiple>
+                  <small id="create-images-hint">支持一次选择多张图片，单张建议不超过 8MB。</small>
+                </label>
+
+                <label class="upload-field">
+                  <span>导入视频</span>
+                  <input id="create-videos" name="videos" type="file" accept="video/*" multiple>
+                  <small id="create-videos-hint">支持常见视频格式，单个建议不超过 35MB。</small>
+                </label>
+              </div>
+
+              <button class="primary-button form-submit" type="submit">创建档案</button>
+            </form>
+          </section>
+
+          <section class="panel guidance reveal">
+            <div class="panel-heading">
+              <div>
+                <p class="section-kicker">使用方式</p>
+                <h3>建议这样整理素材</h3>
+              </div>
+            </div>
+
+            <div class="guidance-list">
+              <article>
+                <h4>图片优先放关键场景</h4>
+                <p>例如老照片、手稿、工作场所、家族合影，让卡片能立刻建立人物感。</p>
+              </article>
+              <article>
+                <h4>视频更适合保留动作与声音</h4>
+                <p>例如讲述片段、手艺展示、节日留影，比单纯文字更能保存生活现场。</p>
+              </article>
+              <article>
+                <h4>数字生命问答依赖档案质量</h4>
+                <p>摘要、愿望和时间线越清晰，RAG 检索到的内容越稳定，回答也更贴近人物。</p>
+              </article>
+            </div>
+          </section>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
+
+  <aside class="detail-drawer" id="detail-drawer" aria-hidden="true">
+    <div class="drawer-inner">
+      <button class="drawer-close" id="close-drawer-btn" type="button" aria-label="关闭详情">×</button>
+      <div id="detail-content" class="detail-content">
+        <div class="detail-placeholder">
+          <p class="section-kicker">档案详情</p>
+          <h3>点击任意档案卡片</h3>
+          <p>这里会展开人物摘要、时间线、素材库以及数字生命对话面板。</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="toast" id="toast" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

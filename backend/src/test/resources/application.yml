@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:lna-test;MODE=PostgreSQL
+  ai:
+    openai:
+      api-key: test-key
+      base-url: https://api.moonshot.ai/v1
+      chat:
+        options:
+          model: kimi-k2.5
+
+app:
+  security:
+    jwt-secret: test-secret-for-local-tests-only

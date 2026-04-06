@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+PyJWT
+numpy
+langchain-community
+langchain-core
+langchain-text-splitters
+faiss-cpu

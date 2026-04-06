@@ -1,0 +1,221 @@
+{
+  "updatedAt": "2026-03-10T03:34:40.605Z",
+  "elders": [
+    {
+      "id": "6de667a3-c813-4060-ac0b-b3fed94dcd33",
+      "name": "测试档案",
+      "age": 71,
+      "hometown": "成都",
+      "community": "成都",
+      "role": "退休工人",
+      "summary": "测试",
+      "wish": "测试",
+      "tags": [],
+      "supporters": [],
+      "tone": "amber",
+      "media": {
+        "photos": 0,
+        "audio": 0,
+        "video": 0,
+        "documents": 0
+      },
+      "timeline": [],
+      "createdAt": "2026-03-10T03:32:38.039Z",
+      "updatedAt": "2026-03-10T03:32:38.039Z"
+    },
+    {
+      "id": "14ddc994-3f29-4269-a2cc-bd26541d0c97",
+      "name": "李阿姨",
+      "age": 72,
+      "hometown": "四川·德阳",
+      "community": "成都芳草街",
+      "role": "退休护士",
+      "summary": "长期在社区门诊工作，希望把护理经验和老照片整理出来。",
+      "wish": "想把年轻时的工作照片和晚年生活视频留给家人。",
+      "tags": [
+        "护理记忆",
+        "社区生活"
+      ],
+      "supporters": [
+        "女儿",
+        "社区志愿者"
+      ],
+      "tone": "jade",
+      "media": {
+        "photos": 0,
+        "audio": 0,
+        "video": 0,
+        "documents": 0
+      },
+      "timeline": [],
+      "createdAt": "2026-03-10T03:31:18.067Z",
+      "updatedAt": "2026-03-10T03:31:18.067Z"
+    },
+    {
+      "id": "c86d6bbd-881b-43cd-8100-d5c10c5c4d16",
+      "name": "张三",
+      "age": 70,
+      "hometown": "四川",
+      "community": "成都",
+      "role": "退休老师",
+      "summary": "桃李满园",
+      "wish": "希望有学生来看望自己",
+      "tags": [],
+      "supporters": [],
+      "tone": "amber",
+      "media": {
+        "photos": 0,
+        "audio": 0,
+        "video": 0,
+        "documents": 0
+      },
+      "timeline": [
+        {
+          "year": "2023",
+          "title": "123",
+          "description": "123"
+        }
+      ],
+      "createdAt": "2026-03-10T03:04:19.686Z",
+      "updatedAt": "2026-03-10T03:04:34.915Z"
+    },
+    {
+      "id": "elder-zhang-guilan",
+      "name": "张桂兰",
+      "age": 79,
+      "hometown": "四川·广元",
+      "community": "成都武侯区玉林街道",
+      "role": "退休纺织女工",
+      "summary": "年轻时在纺织厂工作四十余年，退休后一直照看家人，是邻里口中最会讲厂区往事的人。",
+      "wish": "想学会和外孙稳定视频，也想把做家常菜和照顾家庭的经验留给下一代。",
+      "tags": [
+        "口述史",
+        "家庭记忆",
+        "数字融入"
+      ],
+      "supporters": [
+        "社区社工",
+        "大学生志愿者",
+        "女儿"
+      ],
+      "tone": "amber",
+      "media": {
+        "photos": 18,
+        "audio": 5,
+        "video": 2,
+        "documents": 4
+      },
+      "timeline": [
+        {
+          "year": "1964",
+          "title": "第一次进城读书",
+          "description": "从乡里到县城上学，第一次离开家住校，也第一次开始写日记。"
+        },
+        {
+          "year": "1972",
+          "title": "进入纺织厂",
+          "description": "跟着师傅学绕线、修机，靠一双手撑起了家里的第一份稳定收入。"
+        },
+        {
+          "year": "2024",
+          "title": "开始尝试智能手机",
+          "description": "在社区课堂上学会扫码和语音输入，逐渐敢和家人开视频。"
+        }
+      ],
+      "createdAt": "2025-11-06T10:00:00.000Z",
+      "updatedAt": "2026-03-09T00:00:00.000Z"
+    },
+    {
+      "id": "elder-liu-sulan",
+      "name": "刘素兰",
+      "age": 74,
+      "hometown": "四川·内江",
+      "community": "成都望江路社区",
+      "role": "退休小学教师",
+      "summary": "教了三十多年语文，保留着许多手写教案和班级合影，希望把教学故事整理成可持续讲述的档案。",
+      "wish": "想把自己收藏的老照片和课堂故事讲给孙女听，也希望学会用手机记录朗读。",
+      "tags": [
+        "教育记忆",
+        "照片修复",
+        "代际交流"
+      ],
+      "supporters": [
+        "外孙女",
+        "社区志愿者",
+        "档案实验室"
+      ],
+      "tone": "jade",
+      "media": {
+        "photos": 26,
+        "audio": 8,
+        "video": 1,
+        "documents": 12
+      },
+      "timeline": [
+        {
+          "year": "1978",
+          "title": "回到家乡任教",
+          "description": "第一批学生里有不少留守儿童，她把每个孩子的作文都夹进了自己的备课本里。"
+        },
+        {
+          "year": "1999",
+          "title": "主持校园广播站",
+          "description": "开始录下孩子们的朗诵和采访，留下许多带着磁带底噪的声音记忆。"
+        },
+        {
+          "year": "2025",
+          "title": "参与社区生命故事采集",
+          "description": "第一次意识到自己的教育经历也能成为社区共同记忆的一部分。"
+        }
+      ],
+      "createdAt": "2025-11-12T08:30:00.000Z",
+      "updatedAt": "2026-03-08T12:20:00.000Z"
+    },
+    {
+      "id": "elder-chen-yongfu",
+      "name": "陈永福",
+      "age": 81,
+      "hometown": "四川·乐山",
+      "community": "成都高新区桂溪街道",
+      "role": "老式收音机维修匠",
+      "summary": "擅长修理收音机、风扇和小电器，年轻时靠手艺走街串巷，如今最在意的是这些声音和工具不要失传。",
+      "wish": "希望把修收音机的方法录成短视频，也想知道网上有没有人还愿意听老节目。",
+      "tags": [
+        "手艺传承",
+        "声音档案",
+        "社区陪伴"
+      ],
+      "supporters": [
+        "孙子",
+        "楼栋志愿者",
+        "社区工作站"
+      ],
+      "tone": "rose",
+      "media": {
+        "photos": 15,
+        "audio": 11,
+        "video": 4,
+        "documents": 3
+      },
+      "timeline": [
+        {
+          "year": "1968",
+          "title": "学会修第一台收音机",
+          "description": "拆开父亲朋友送来的一台旧机子，第一次知道线圈和电容也能讲故事。"
+        },
+        {
+          "year": "1987",
+          "title": "在集市摆摊修电器",
+          "description": "最忙的时候一天能修十几台小家电，也结识了很多老街坊。"
+        },
+        {
+          "year": "2025",
+          "title": "录下第一段维修口述",
+          "description": "在志愿者帮助下，对着手机讲完了自己最熟悉的一套检修步骤。"
+        }
+      ],
+      "createdAt": "2025-11-15T09:10:00.000Z",
+      "updatedAt": "2026-03-07T15:40:00.000Z"
+    }
+  ]
+}
