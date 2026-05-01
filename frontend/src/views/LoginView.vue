@@ -1,14 +1,12 @@
-﻿<template>
-  <div class="auth-view">
-    <section class="auth-copy panel">
-      <p class="eyebrow">生命叙事档案</p>
-      <h1>先建立会话，再进入档案工作台</h1>
-      <p>
-        首轮迁移先打通登录、会话恢复、档案列表和详情查看。上传、多模态提取和 RAG 问答将在后续轮次继续接入。
-      </p>
-    </section>
+<template>
+  <div class="auth-scene" :style="{ '--auth-cover': `url(${loginCoverUrl})` }">
+    <div class="auth-scene__scrim" />
 
-    <section class="auth-form panel">
+    <section class="auth-modal panel">
+      <p class="eyebrow">生命叙事档案</p>
+      <h1>生命叙事档案</h1>
+     
+
       <div class="auth-switch">
         <button :class="{ active: auth.authMode === 'login' }" type="button" @click="auth.authMode = 'login'">登录</button>
         <button :class="{ active: auth.authMode === 'register' }" type="button" @click="auth.authMode = 'register'">注册</button>
@@ -23,14 +21,10 @@
           <span>密码</span>
           <input v-model="loginForm.password" type="password" autocomplete="current-password" required />
         </label>
-        <button class="primary-button" type="submit" :disabled="auth.loading">{{ auth.loading ? '登录中...' : '登录' }}</button>
+        <button class="primary-button" type="submit" :disabled="auth.loading">{{ auth.loading ? "登录中..." : "登录" }}</button>
       </form>
 
       <form v-else class="stack" @submit.prevent="submitRegister">
-        <label>
-          <span>显示名称</span>
-          <input v-model.trim="registerForm.displayName" autocomplete="nickname" />
-        </label>
         <label>
           <span>用户名</span>
           <input v-model.trim="registerForm.username" autocomplete="username" required />
@@ -39,7 +33,7 @@
           <span>密码</span>
           <input v-model="registerForm.password" type="password" autocomplete="new-password" required />
         </label>
-        <button class="primary-button" type="submit" :disabled="auth.loading">{{ auth.loading ? '注册中...' : '注册并进入' }}</button>
+        <button class="primary-button" type="submit" :disabled="auth.loading">{{ auth.loading ? "注册中..." : "注册并进入" }}</button>
       </form>
 
       <p v-if="errorMessage" class="error-text">{{ errorMessage }}</p>
@@ -56,6 +50,7 @@ import { useAuthStore } from "@/stores/auth";
 const auth = useAuthStore();
 const router = useRouter();
 const errorMessage = ref("");
+const loginCoverUrl = new URL("../../img/load.jpg", import.meta.url).href;
 
 const loginForm = reactive({
   username: "",
@@ -63,7 +58,6 @@ const loginForm = reactive({
 });
 
 const registerForm = reactive({
-  displayName: "",
   username: "",
   password: "",
 });
@@ -72,19 +66,23 @@ async function submitLogin() {
   errorMessage.value = "";
   try {
     await auth.loginWithPassword(loginForm);
-    await router.push({ name: 'workspace' });
+    await router.push({ name: "workspace" });
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '登录失败';
+    errorMessage.value = error instanceof Error ? error.message : "登录失败";
   }
 }
 
 async function submitRegister() {
   errorMessage.value = "";
   try {
-    await auth.registerWithPassword(registerForm);
-    await router.push({ name: 'workspace' });
+    await auth.registerWithPassword({
+      username: registerForm.username.trim(),
+      password: registerForm.password,
+      displayName: registerForm.username.trim(),
+    });
+    await router.push({ name: "workspace" });
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '注册失败';
+    errorMessage.value = error instanceof Error ? error.message : "注册失败";
   }
 }
 </script>

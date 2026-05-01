@@ -12,3 +12,5 @@ spring:
 app:
   security:
     jwt-secret: test-secret-for-local-tests-only
+  storage:
+    upload-dir: ./target/test-uploads

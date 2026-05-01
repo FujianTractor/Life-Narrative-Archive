@@ -24,10 +24,17 @@ export interface ArchiveCreatePayload {
   tone: ArchiveTone;
 }
 
+export type ArchiveUpdatePayload = ArchiveCreatePayload;
+
 export interface ArchiveTimelinePayload {
   year: string;
   title: string;
   description: string;
+}
+
+export interface ArchiveAsset {
+  name: string;
+  url?: string;
 }
 
 export interface ArchiveSummary {
@@ -54,8 +61,8 @@ export interface TimelineEntry {
 export interface ArchiveDetail extends ArchiveSummary {
   timeline?: TimelineEntry[];
   assets?: {
-    images?: Array<{ name: string; url?: string }>;
-    videos?: Array<{ name: string; url?: string }>;
+    images?: ArchiveAsset[];
+    videos?: ArchiveAsset[];
   };
 }
 

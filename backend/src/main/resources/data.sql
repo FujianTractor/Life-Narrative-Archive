@@ -13,21 +13,21 @@ insert into archives (
     79,
     'Guangyuan, Sichuan',
     'Yulin Street, Chengdu',
-    'Retired textile worker',
-    'Persistent backend sample archive used for integration and regression checks.',
-    'Preserve recipes and family memories for younger generations.',
+    '退休纺织工人',
+    '这是用于联调与回归测试的示例档案，展示摘要、标签、时间线和媒体数据在工作台中的呈现方式。',
+    '把家常菜谱和家族记忆整理下来，留给下一代。',
     'amber',
     TIMESTAMP WITH TIME ZONE '2026-04-05T00:00:00Z',
     TIMESTAMP WITH TIME ZONE '2026-04-05T00:00:00Z'
 );
 
 insert into archive_tags (archive_id, tag) values
-    ('elder-demo-1', 'oral history'),
-    ('elder-demo-1', 'family memories');
+    ('elder-demo-1', '口述史'),
+    ('elder-demo-1', '家庭记忆');
 
 insert into archive_supporters (archive_id, supporter) values
-    ('elder-demo-1', 'community worker'),
-    ('elder-demo-1', 'daughter');
+    ('elder-demo-1', '社区社工'),
+    ('elder-demo-1', '女儿');
 
 insert into archive_timelines (
     id, archive_id, year_label, title, description, sort_order, created_at
@@ -36,8 +36,8 @@ insert into archive_timelines (
         'timeline-demo-1',
         'elder-demo-1',
         '1964',
-        'First trip to the city',
-        'She started keeping a diary after leaving her hometown.',
+        '第一次进城工作',
+        '离开家乡后，她开始一边工作一边写日记，记录新的城市生活。',
         1,
         TIMESTAMP WITH TIME ZONE '2026-04-05T00:00:00Z'
     ),
@@ -45,8 +45,8 @@ insert into archive_timelines (
         'timeline-demo-2',
         'elder-demo-1',
         '2024',
-        'Started using a smartphone',
-        'She gradually learned how to scan codes and make video calls.',
+        '开始使用智能手机',
+        '她逐渐学会扫码、视频通话，也开始尝试把老照片讲给家人听。',
         2,
         TIMESTAMP WITH TIME ZONE '2026-04-05T00:00:00Z'
     );

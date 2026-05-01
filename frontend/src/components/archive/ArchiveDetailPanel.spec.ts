@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import ArchiveDetailPanel from "./ArchiveDetailPanel.vue";
 
 describe("ArchiveDetailPanel", () => {
-  it("submits a trimmed timeline payload", async () => {
+  it("submits a trimmed timeline payload in editable mode", async () => {
     const onAppendTimeline = vi.fn().mockResolvedValue(undefined);
     const archive = {
       id: "elder-1",
@@ -14,9 +14,9 @@ describe("ArchiveDetailPanel", () => {
       community: "成都玉林街道",
       role: "退休纺织工人",
       summary: "示例摘要",
-      wish: "示例愿望",
+      wish: "",
       tags: ["口述史"],
-      supporters: ["社区社工"],
+      supporters: [],
       tone: "amber",
       updatedAt: "2026-04-05T00:00:00Z",
       timeline: [],
@@ -26,6 +26,7 @@ describe("ArchiveDetailPanel", () => {
     const view = render(ArchiveDetailPanel, {
       props: {
         archive,
+        editable: true,
         onAppendTimeline,
       },
     });
@@ -34,7 +35,7 @@ describe("ArchiveDetailPanel", () => {
     await fireEvent.update(view.getByLabelText("标题"), " 搬到社区居住 ");
     await fireEvent.update(view.getByLabelText("描述"), " 开始在社区参加合唱和手工活动。 ");
 
-    await fireEvent.click(view.getByRole("button", { name: "添加时间线" }));
+    await fireEvent.click(view.getByRole("button", { name: "补录时间线" }));
 
     await waitFor(() => {
       expect(onAppendTimeline).toHaveBeenCalledWith({
@@ -44,6 +45,6 @@ describe("ArchiveDetailPanel", () => {
       });
     });
 
-    expect(await view.findByText("时间线已追加到当前档案。") ).toBeTruthy();
+    expect(await view.findByText("时间线已追加到当前档案。")).toBeTruthy();
   });
 });

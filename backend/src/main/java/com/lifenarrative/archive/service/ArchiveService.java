@@ -15,7 +15,9 @@ import com.lifenarrative.archive.exception.ResourceNotFoundException;
 import com.lifenarrative.archive.repository.ArchiveRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -31,9 +33,20 @@ public class ArchiveService {
     private static final String DEFAULT_TONE = "amber";
 
     private final ArchiveRepository archiveRepository;
+    private final DocumentTextExtractorService documentTextExtractorService;
+    private final NarrativeGenerationService narrativeGenerationService;
+    private final FileStorageService fileStorageService;
 
-    public ArchiveService(ArchiveRepository archiveRepository) {
+    public ArchiveService(
+            ArchiveRepository archiveRepository,
+            DocumentTextExtractorService documentTextExtractorService,
+            NarrativeGenerationService narrativeGenerationService,
+            FileStorageService fileStorageService
+    ) {
         this.archiveRepository = archiveRepository;
+        this.documentTextExtractorService = documentTextExtractorService;
+        this.narrativeGenerationService = narrativeGenerationService;
+        this.fileStorageService = fileStorageService;
     }
 
     @Transactional(readOnly = true)
@@ -68,16 +81,16 @@ public class ArchiveService {
     @Transactional
     public ArchiveDetailResponse createArchive(CreateArchiveRequest request) {
         ArchiveEntity archive = new ArchiveEntity();
-        archive.setName(request.name().trim());
-        archive.setAge(request.age());
-        archive.setHometown(normalizeText(request.hometown()));
-        archive.setCommunity(normalizeText(request.community()));
-        archive.setRole(normalizeText(request.role()));
-        archive.setSummary(normalizeText(request.summary()));
-        archive.setWish(normalizeText(request.wish()));
-        archive.setTone(normalizeTone(request.tone()));
-        archive.setTags(toLinkedSet(request.tags()));
-        archive.setSupporters(toLinkedSet(request.supporters()));
+        applyArchiveRequest(archive, request);
+
+        ArchiveEntity savedArchive = archiveRepository.save(archive);
+        return new ArchiveDetailResponse(toDetail(savedArchive));
+    }
+
+    @Transactional
+    public ArchiveDetailResponse updateArchive(String archiveId, CreateArchiveRequest request) {
+        ArchiveEntity archive = findArchive(archiveId);
+        applyArchiveRequest(archive, request);
 
         ArchiveEntity savedArchive = archiveRepository.save(archive);
         return new ArchiveDetailResponse(toDetail(savedArchive));
@@ -96,6 +109,78 @@ public class ArchiveService {
 
         ArchiveEntity savedArchive = archiveRepository.save(archive);
         return new ArchiveDetailResponse(toDetail(savedArchive));
+    }
+
+    @Transactional
+    public ArchiveDetailResponse generateSummaryFromDocument(String archiveId, MultipartFile file) throws IOException {
+        ArchiveEntity archive = findArchive(archiveId);
+        validateDocumentFile(file);
+
+        String documentText = documentTextExtractorService.extractText(file);
+        NarrativeGenerationService.GeneratedNarrative narrative = narrativeGenerationService.generateNarrative(
+                archive.getName(),
+                archive.getRole(),
+                documentText
+        );
+
+        archive.setSummary(normalizeText(narrative.summary()));
+        mergeTimelineDrafts(archive, narrative.timeline());
+
+        ArchiveEntity savedArchive = archiveRepository.save(archive);
+        return new ArchiveDetailResponse(toDetail(savedArchive));
+    }
+
+    @Transactional
+    public ArchiveDetailResponse uploadImage(String archiveId, MultipartFile file) throws IOException {
+        ArchiveEntity archive = findArchive(archiveId);
+        validateImageFile(file);
+
+        FileStorageService.StoredFile storedFile = fileStorageService.storeArchiveImage(archiveId, file);
+
+        AssetEntity asset = new AssetEntity();
+        asset.setAssetType("image");
+        asset.setName(storedFile.originalFilename());
+        asset.setFilePath(storedFile.filePath());
+        asset.setUrlPath(storedFile.urlPath());
+        asset.setMimeType(storedFile.mimeType());
+        asset.setSizeBytes(storedFile.sizeBytes());
+        archive.addAsset(asset);
+
+        ArchiveEntity savedArchive = archiveRepository.save(archive);
+        return new ArchiveDetailResponse(toDetail(savedArchive));
+    }
+
+    @Transactional
+    public ArchiveDetailResponse uploadVideo(String archiveId, MultipartFile file) throws IOException {
+        ArchiveEntity archive = findArchive(archiveId);
+        validateVideoFile(file);
+
+        FileStorageService.StoredFile storedFile = fileStorageService.storeArchiveVideo(archiveId, file);
+
+        AssetEntity asset = new AssetEntity();
+        asset.setAssetType("video");
+        asset.setName(storedFile.originalFilename());
+        asset.setFilePath(storedFile.filePath());
+        asset.setUrlPath(storedFile.urlPath());
+        asset.setMimeType(storedFile.mimeType());
+        asset.setSizeBytes(storedFile.sizeBytes());
+        archive.addAsset(asset);
+
+        ArchiveEntity savedArchive = archiveRepository.save(archive);
+        return new ArchiveDetailResponse(toDetail(savedArchive));
+    }
+
+    private void applyArchiveRequest(ArchiveEntity archive, CreateArchiveRequest request) {
+        archive.setName(request.name().trim());
+        archive.setAge(request.age());
+        archive.setHometown(normalizeText(request.hometown()));
+        archive.setCommunity(normalizeText(request.community()));
+        archive.setRole(normalizeText(request.role()));
+        archive.setSummary(normalizeText(request.summary()));
+        archive.setWish(normalizeText(request.wish()));
+        archive.setTone(normalizeTone(request.tone()));
+        archive.setTags(toLinkedSet(request.tags()));
+        archive.setSupporters(toLinkedSet(request.supporters()));
     }
 
     private ArchiveEntity findArchive(String archiveId) {
@@ -158,6 +243,80 @@ public class ArchiveService {
                 "name", asset.getName(),
                 "url", asset.getUrlPath()
         );
+    }
+
+    private void mergeTimelineDrafts(ArchiveEntity archive, List<NarrativeGenerationService.TimelineDraft> drafts) {
+        Set<String> existingKeys = archive.getTimelines().stream()
+                .map(item -> timelineKey(item.getYearLabel(), item.getTitle(), item.getDescription()))
+                .collect(LinkedHashSet::new, Set::add, Set::addAll);
+
+        int sortOrder = archive.getTimelines().size();
+        for (NarrativeGenerationService.TimelineDraft draft : drafts) {
+            String year = normalizeText(draft.year());
+            String title = normalizeText(draft.title());
+            String description = normalizeText(draft.description());
+            if (year.isBlank() || title.isBlank() || description.isBlank()) {
+                continue;
+            }
+
+            String key = timelineKey(year, title, description);
+            if (!existingKeys.add(key)) {
+                continue;
+            }
+
+            ArchiveTimelineEntity timeline = new ArchiveTimelineEntity();
+            timeline.setYearLabel(year);
+            timeline.setTitle(title);
+            timeline.setDescription(description);
+            timeline.setSortOrder(++sortOrder);
+            archive.addTimeline(timeline);
+        }
+    }
+
+    private String timelineKey(String year, String title, String description) {
+        return normalizeText(year) + "|" + normalizeText(title) + "|" + normalizeText(description);
+    }
+
+    private void validateDocumentFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("请先选择要上传的文档");
+        }
+
+        String fileName = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase(Locale.ROOT);
+        if (!fileName.endsWith(".docx") && !fileName.endsWith(".doc")) {
+            throw new IllegalArgumentException("仅支持上传 DOCX 或 DOC 文档");
+        }
+    }
+
+    private void validateImageFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("请先选择要上传的图片");
+        }
+
+        String fileName = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase(Locale.ROOT);
+        String contentType = file.getContentType() == null ? "" : file.getContentType().toLowerCase(Locale.ROOT);
+        boolean allowedByName = fileName.endsWith(".jpg")
+                || fileName.endsWith(".jpeg")
+                || fileName.endsWith(".png")
+                || fileName.endsWith(".webp");
+        boolean allowedByType = contentType.startsWith("image/");
+        if (!allowedByName && !allowedByType) {
+            throw new IllegalArgumentException("仅支持上传 JPG、PNG、WEBP 等图片格式");
+        }
+    }
+
+    private void validateVideoFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("请先选择要上传的视频");
+        }
+
+        String fileName = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase(Locale.ROOT);
+        String contentType = file.getContentType() == null ? "" : file.getContentType().toLowerCase(Locale.ROOT);
+        boolean allowedByName = fileName.endsWith(".mp4") || fileName.endsWith(".mov") || fileName.endsWith(".m4v") || fileName.endsWith(".webm");
+        boolean allowedByType = contentType.startsWith("video/");
+        if (!allowedByName && !allowedByType) {
+            throw new IllegalArgumentException("仅支持上传常见视频格式，如 MP4、MOV、WEBM");
+        }
     }
 
     private Set<String> toLinkedSet(List<String> values) {

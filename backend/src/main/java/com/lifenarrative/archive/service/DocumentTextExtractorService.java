@@ -2,8 +2,8 @@ package com.lifenarrative.archive.service;
 
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.extractor.WordExtractor;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,7 +22,7 @@ public class DocumentTextExtractorService {
             return switch (extension) {
                 case "docx" -> extractDocx(inputStream);
                 case "doc" -> extractDoc(inputStream);
-                default -> throw new IllegalArgumentException("仅支持上传 DOCX 或 DOC 文档");
+                default -> throw new IllegalArgumentException("Only DOCX and DOC files are supported.");
             };
         }
     }
