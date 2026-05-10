@@ -1,11 +1,23 @@
 spring:
   application:
     name: life-narrative-archive-backend
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiEmbeddingAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiImageAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiAudioSpeechAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiAudioTranscriptionAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiModerationAutoConfiguration
   datasource:
     url: jdbc:h2:mem:lna;MODE=PostgreSQL
     driver-class-name: org.h2.Driver
     username: sa
     password:
+  servlet:
+    multipart:
+      max-file-size: ${APP_MAX_FILE_SIZE:300MB}
+      max-request-size: ${APP_MAX_REQUEST_SIZE:320MB}
   sql:
     init:
       mode: always
@@ -15,26 +27,30 @@ spring:
       ddl-auto: none
     open-in-view: false
   ai:
+    chat:
+      client:
+        enabled: ${OPENAI_CHAT_ENABLED:false}
     openai:
       api-key: ${OPENAI_API_KEY:}
-      base-url: ${OPENAI_BASE_URL:https://api.moonshot.ai/v1}
       chat:
+        enabled: ${OPENAI_CHAT_ENABLED:false}
         options:
           model: ${OPENAI_CHAT_MODEL:kimi-k2.5}
+      base-url: ${OPENAI_BASE_URL:https://api.moonshot.ai/v1}
       embedding:
         options:
           model: ${OPENAI_EMBEDDING_MODEL:text-embedding-3-small}
 
 server:
   address: 0.0.0.0
-  port: 8080
+  port: 18080
 
 app:
   site:
     base-url: ${APP_SITE_BASE_URL:http://8.137.14.17}
-    api-base-url: ${APP_API_BASE_URL:http://8.137.14.17:8080/api}
+    api-base-url: ${APP_API_BASE_URL:http://8.137.14.17:18080/api}
   security:
-    allowed-origins: ${APP_ALLOWED_ORIGINS:http://8.137.14.17}
+    allowed-origins: ${APP_ALLOWED_ORIGINS:http://8.137.14.17,http://8.137.14.17:5173,http://localhost:5173,http://127.0.0.1:5173}
     jwt-secret: ${APP_JWT_SECRET:change-me-before-production}
   storage:
     upload-dir: ${APP_UPLOAD_DIR:../uploads}

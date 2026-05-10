@@ -19,11 +19,13 @@ public class DocumentTextExtractorService {
         String extension = getExtension(fileName);
 
         try (InputStream inputStream = file.getInputStream()) {
-            return switch (extension) {
-                case "docx" -> extractDocx(inputStream);
-                case "doc" -> extractDoc(inputStream);
-                default -> throw new IllegalArgumentException("Only DOCX and DOC files are supported.");
-            };
+            if ("docx".equals(extension)) {
+                return extractDocx(inputStream);
+            } else if ("doc".equals(extension)) {
+                return extractDoc(inputStream);
+            } else {
+                throw new IllegalArgumentException("Only DOCX and DOC files are supported.");
+            }
         }
     }
 

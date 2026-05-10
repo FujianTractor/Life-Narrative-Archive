@@ -29,7 +29,9 @@ public final class ArchiveDtos {
     }
 
     public record TimelineEntry(
-            String year,
+            String id,
+            int year,
+            String location,
             String title,
             String description
     ) {
@@ -87,6 +89,15 @@ public final class ArchiveDtos {
 
     public record AppendTimelineRequest(
             @NotBlank String year,
+            String location,
+            @NotBlank String title,
+            @NotBlank String description
+    ) {
+    }
+
+    public record TimelineUpdateRequest(
+            @NotBlank String year,
+            String location,
             @NotBlank String title,
             @NotBlank String description
     ) {

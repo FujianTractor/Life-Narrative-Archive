@@ -4,10 +4,12 @@ import { defineStore } from "pinia";
 import {
   appendTimeline as appendTimelineRequest,
   createArchive as createArchiveRequest,
+  deleteTimeline as deleteTimelineRequest,
   fetchArchiveDetail,
   fetchArchives,
   generateSummaryFromDocument as generateSummaryFromDocumentRequest,
   updateArchive as updateArchiveRequest,
+  updateTimeline as updateTimelineRequest,
   uploadArchiveImage as uploadArchiveImageRequest,
   uploadArchiveVideo as uploadArchiveVideoRequest,
 } from "@/services/archiveService";
@@ -123,6 +125,36 @@ export const useArchiveStore = defineStore("archive", () => {
     }
   }
 
+  async function updateTimeline(timelineId: string, payload: ArchiveTimelinePayload) {
+    const archiveId = assertSelectedArchive();
+
+    loading.value = true;
+    try {
+      const data = await updateTimelineRequest(archiveId, timelineId, payload);
+      selectedArchive.value = data.elder;
+      await loadArchives();
+      await selectArchive(archiveId);
+      return data.elder;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function deleteTimeline(timelineId: string) {
+    const archiveId = assertSelectedArchive();
+
+    loading.value = true;
+    try {
+      const data = await deleteTimelineRequest(archiveId, timelineId);
+      selectedArchive.value = data.elder;
+      await loadArchives();
+      await selectArchive(archiveId);
+      return data.elder;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   async function generateSummaryFromDocument(file: File) {
     const archiveId = assertSelectedArchive();
 
@@ -195,6 +227,8 @@ export const useArchiveStore = defineStore("archive", () => {
     createArchive,
     updateArchive,
     appendTimeline,
+    updateTimeline,
+    deleteTimeline,
     generateSummaryFromDocument,
     uploadImages,
     uploadVideo,

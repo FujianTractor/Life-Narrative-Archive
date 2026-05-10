@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
@@ -65,11 +66,15 @@ public class ArchiveEntity {
     private Set<String> supporters = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "archive", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("sortOrder ASC")
+    @OrderBy("yearLabel ASC")
     private List<ArchiveTimelineEntity> timelines = new ArrayList<>();
 
     @OneToMany(mappedBy = "archive", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AssetEntity> assets = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -193,5 +198,13 @@ public class ArchiveEntity {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    public UserEntity getUser() {
+        return user;
+    }
+
+    public void setUser(UserEntity user) {
+        this.user = user;
     }
 }

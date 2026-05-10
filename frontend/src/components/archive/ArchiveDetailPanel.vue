@@ -34,6 +34,11 @@
         </div>
       </dl>
 
+      <TrajectoryMap
+        :timeline="orderedTimeline"
+        :fallback-location="archive.hometown || archive.community"
+      />
+
       <section class="detail-section">
         <div class="section-head">
           <div>
@@ -86,22 +91,48 @@
             <h3>时间线</h3>
             <p class="helper-text">在呈现模式下只阅读；进入编辑后才开放补录入口。</p>
           </div>
-          <span class="section-badge">{{ archive.timeline?.length ?? 0 }} 条</span>
+          <span class="section-badge">{{ orderedTimeline.length }} 条</span>
         </div>
 
-        <div v-if="archive.timeline?.length" class="timeline-list">
-          <article v-for="entry in archive.timeline" :key="`${entry.year}-${entry.title}`" class="timeline-card">
-            <p class="timeline-year">{{ entry.year }}</p>
+        <div v-if="orderedTimeline.length" class="timeline-list">
+          <article v-for="entry in orderedTimeline" :key="entry.id" class="timeline-card">
+            <div class="timeline-card__header">
+              <p class="timeline-year">{{ entry.year }}</p>
+              <div v-if="editable" class="timeline-card__actions">
+                <button
+                  type="button"
+                  class="icon-button"
+                  :disabled="editingTimelineId === entry.id"
+                  @click="startEditTimeline(entry)"
+                >
+                  编辑
+                </button>
+                <button
+                  type="button"
+                  class="icon-button danger"
+                  :disabled="deletingTimelineId === entry.id"
+                  @click="handleDeleteTimeline(entry.id)"
+                >
+                  {{ deletingTimelineId === entry.id ? "删除中..." : "删除" }}
+                </button>
+              </div>
+            </div>
             <h4>{{ entry.title }}</h4>
+            <p v-if="entry.location" class="timeline-location">{{ entry.location }}</p>
             <p>{{ entry.description }}</p>
           </article>
         </div>
         <p v-else class="detail-empty-copy">这份档案还没有时间线内容。</p>
 
-        <form v-if="editable" class="stack timeline-editor" @submit.prevent="handleAppendTimelineSubmit">
+        <form v-if="editable" class="stack timeline-editor" @submit.prevent="editingTimelineId ? handleUpdateTimelineSubmit() : handleAppendTimelineSubmit()">
           <label>
             <span>年份</span>
-            <input v-model.trim="timelineForm.year" placeholder="如：1998" required />
+            <input v-model.trim="timelineForm.year" placeholder="如：1998" required type="number" />
+          </label>
+
+          <label>
+            <span>地点</span>
+            <input v-model.trim="timelineForm.location" placeholder="如：成都、广元、北京" />
           </label>
 
           <label>
@@ -119,9 +150,23 @@
             />
           </label>
 
-          <button class="secondary-button" type="submit" :disabled="submittingTimeline || !onAppendTimeline">
-            {{ submittingTimeline ? "保存中..." : "补录时间线" }}
-          </button>
+          <div class="form-actions">
+            <button
+              v-if="editingTimelineId"
+              class="secondary-button"
+              type="button"
+              @click="cancelEditTimeline"
+            >
+              取消编辑
+            </button>
+            <button
+              class="secondary-button"
+              type="submit"
+              :disabled="isTimelineSubmitDisabled"
+            >
+              {{ submittingTimeline ? "保存中..." : editingTimelineId ? "更新时间线" : "补录时间线" }}
+            </button>
+          </div>
 
           <p v-if="timelineSuccessMessage" class="success-text">{{ timelineSuccessMessage }}</p>
           <p v-if="timelineErrorMessage" class="error-text">{{ timelineErrorMessage }}</p>
@@ -222,6 +267,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
 
+import TrajectoryMap from "@/components/archive/TrajectoryMap.vue";
 import type { ArchiveDetail, ArchiveTimelinePayload } from "@/types/api";
 
 const props = withDefaults(
@@ -231,6 +277,8 @@ const props = withDefaults(
     showEditAction?: boolean;
     editActionLabel?: string;
     onAppendTimeline?: (payload: ArchiveTimelinePayload) => Promise<void>;
+    onUpdateTimeline?: (timelineId: string, payload: ArchiveTimelinePayload) => Promise<void>;
+    onDeleteTimeline?: (timelineId: string) => Promise<void>;
     submittingTimeline?: boolean;
     onGenerateSummaryFromDocument?: (file: File) => Promise<void>;
     generatingSummary?: boolean;
@@ -256,9 +304,13 @@ const emit = defineEmits<{
 
 const timelineForm = reactive({
   year: "",
+  location: "",
   title: "",
   description: "",
 });
+
+const editingTimelineId = ref<string | null>(null);
+const deletingTimelineId = ref<string | null>(null);
 
 const documentFile = ref<File | null>(null);
 const imageFiles = ref<File[]>([]);
@@ -277,13 +329,73 @@ const videoSuccessMessage = ref("");
 const videoErrorMessage = ref("");
 
 const totalMediaCount = computed(() => (props.archive?.assets?.images?.length ?? 0) + (props.archive?.assets?.videos?.length ?? 0));
+const orderedTimeline = computed(() => [...(props.archive?.timeline ?? [])].sort((left, right) => left.year - right.year));
+const isTimelineSubmitDisabled = computed(() => {
+  if (props.submittingTimeline) {
+    return true;
+  }
+  return editingTimelineId.value ? !props.onUpdateTimeline : !props.onAppendTimeline;
+});
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 const assetBaseUrl = resolveAssetBaseUrl();
 
 function resetTimelineForm() {
   timelineForm.year = "";
+  timelineForm.location = "";
   timelineForm.title = "";
   timelineForm.description = "";
+  editingTimelineId.value = null;
+}
+
+function startEditTimeline(entry: { id: string; year: number; location?: string; title: string; description: string }) {
+  editingTimelineId.value = entry.id;
+  timelineForm.year = String(entry.year);
+  timelineForm.location = entry.location ?? "";
+  timelineForm.title = entry.title;
+  timelineForm.description = entry.description;
+}
+
+function cancelEditTimeline() {
+  editingTimelineId.value = null;
+  resetTimelineForm();
+}
+
+async function handleUpdateTimelineSubmit() {
+  if (!props.archive || !props.onUpdateTimeline || !editingTimelineId.value) {
+    return;
+  }
+
+  timelineSuccessMessage.value = "";
+  timelineErrorMessage.value = "";
+
+  try {
+    await props.onUpdateTimeline(editingTimelineId.value, {
+      year: String(timelineForm.year).trim(),
+      location: timelineForm.location.trim(),
+      title: timelineForm.title.trim(),
+      description: timelineForm.description.trim(),
+    });
+    resetTimelineForm();
+    timelineSuccessMessage.value = "时间线已更新。";
+  } catch (error) {
+    timelineErrorMessage.value = error instanceof Error ? error.message : "更新失败，请稍后重试";
+  }
+}
+
+async function handleDeleteTimeline(timelineId: string) {
+  if (!props.archive || !props.onDeleteTimeline) {
+    return;
+  }
+
+  deletingTimelineId.value = timelineId;
+
+  try {
+    await props.onDeleteTimeline(timelineId);
+    deletingTimelineId.value = null;
+  } catch (error) {
+    timelineErrorMessage.value = error instanceof Error ? error.message : "删除失败，请稍后重试";
+    deletingTimelineId.value = null;
+  }
 }
 
 function resetUploadState() {
@@ -399,7 +511,8 @@ async function handleAppendTimelineSubmit() {
 
   try {
     await props.onAppendTimeline({
-      year: timelineForm.year.trim(),
+      year: String(timelineForm.year).trim(),
+      location: timelineForm.location.trim(),
       title: timelineForm.title.trim(),
       description: timelineForm.description.trim(),
     });

@@ -28,6 +28,7 @@ export type ArchiveUpdatePayload = ArchiveCreatePayload;
 
 export interface ArchiveTimelinePayload {
   year: string;
+  location?: string;
   title: string;
   description: string;
 }
@@ -53,7 +54,9 @@ export interface ArchiveSummary {
 }
 
 export interface TimelineEntry {
-  year: string;
+  id: string;
+  year: number;
+  location?: string;
   title: string;
   description: string;
 }

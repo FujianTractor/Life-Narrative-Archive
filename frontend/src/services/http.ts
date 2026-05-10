@@ -5,7 +5,9 @@ const errorMessageMap: Record<string, string> = {
   "Username already exists": "用户名已存在",
   "Unauthorized or invalid token": "登录状态已失效，请重新登录",
   "Archive not found": "未找到对应的档案",
+  "Access denied to this archive": "无权访问此档案",
   "Request validation failed": "请求参数校验失败",
+  "Uploaded file is too large": "上传文件过大，请压缩后重试",
   "Internal server error": "服务暂时不可用，请稍后重试",
 };
 

@@ -81,7 +81,7 @@
             </div>
 
             <div v-if="spotlightTimeline.length" class="timeline-list">
-              <article v-for="entry in spotlightTimeline" :key="`${entry.year}-${entry.title}`" class="timeline-card">
+              <article v-for="entry in spotlightTimeline" :key="entry.id" class="timeline-card">
                 <p class="timeline-year">{{ entry.year }}</p>
                 <h4>{{ entry.title }}</h4>
                 <p>{{ entry.description }}</p>
@@ -213,6 +213,8 @@
             :archive="archiveStore.selectedArchive"
             editable
             :on-append-timeline="handleAppendTimeline"
+            :on-update-timeline="handleUpdateTimeline"
+            :on-delete-timeline="handleDeleteTimeline"
             :submitting-timeline="appendingTimeline"
             :on-generate-summary-from-document="handleGenerateSummaryFromDocument"
             :generating-summary="generatingSummary"
@@ -379,6 +381,24 @@ async function handleAppendTimeline(payload: ArchiveTimelinePayload) {
   appendingTimeline.value = true;
   try {
     await archiveStore.appendTimeline(payload);
+  } finally {
+    appendingTimeline.value = false;
+  }
+}
+
+async function handleUpdateTimeline(timelineId: string, payload: ArchiveTimelinePayload) {
+  appendingTimeline.value = true;
+  try {
+    await archiveStore.updateTimeline(timelineId, payload);
+  } finally {
+    appendingTimeline.value = false;
+  }
+}
+
+async function handleDeleteTimeline(timelineId: string) {
+  appendingTimeline.value = true;
+  try {
+    await archiveStore.deleteTimeline(timelineId);
   } finally {
     appendingTimeline.value = false;
   }

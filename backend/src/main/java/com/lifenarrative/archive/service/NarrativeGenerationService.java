@@ -3,6 +3,7 @@ package com.lifenarrative.archive.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -20,8 +21,9 @@ public class NarrativeGenerationService {
     private final ChatClient chatClient;
     private final ObjectMapper objectMapper;
 
-    public NarrativeGenerationService(ChatClient.Builder chatClientBuilder, ObjectMapper objectMapper) {
-        this.chatClient = chatClientBuilder.build();
+    public NarrativeGenerationService(ObjectProvider<ChatClient.Builder> chatClientBuilderProvider, ObjectMapper objectMapper) {
+        ChatClient.Builder chatClientBuilder = chatClientBuilderProvider.getIfAvailable();
+        this.chatClient = chatClientBuilder == null ? null : chatClientBuilder.build();
         this.objectMapper = objectMapper;
     }
 
@@ -39,35 +41,33 @@ public class NarrativeGenerationService {
     }
 
     private GeneratedNarrative generateWithModel(String archiveName, String role, String documentText) throws Exception {
-        String prompt = """
-                You are an archive assistant.
-                Based on the provided document, generate a Chinese summary and timeline.
+        if (chatClient == null) {
+            throw new IllegalStateException("AI chat client is not configured.");
+        }
 
-                Output rules:
-                1. Return strict JSON only (no markdown, no extra explanation).
-                2. Use this exact schema:
-                {
-                  "summary": "Chinese summary text",
-                  "timeline": [
-                    { "year": "year or stage", "title": "event title", "description": "event description" }
-                  ]
-                }
-                3. Keep all values in Chinese.
-                4. Summary should be concise but complete (around 120-220 Chinese chars when possible).
-                5. Timeline should include 3-6 items in chronological order.
-                6. If no explicit year is present, use stage-like labels.
-                7. Do not fabricate unsupported facts.
-
-                Person name: %s
-                Person role: %s
-
-                Document content:
-                %s
-                """.formatted(
-                safeText(archiveName, "Unknown person"),
-                safeText(role, "Not provided"),
-                truncate(documentText, 12000)
-        );
+        String prompt = "You are an archive assistant.\n" +
+                "Based on the provided document, generate a Chinese summary and timeline.\n" +
+                "\n" +
+                "Output rules:\n" +
+                "1. Return strict JSON only (no markdown, no extra explanation).\n" +
+                "2. Use this exact schema:\n" +
+                "{\n" +
+                "  \"summary\": \"Chinese summary text\",\n" +
+                "  \"timeline\": [\n" +
+                "    { \"year\": \"year or stage\", \"title\": \"event title\", \"description\": \"event description\" }\n" +
+                "  ]\n" +
+                "}\n" +
+                "3. Keep all values in Chinese.\n" +
+                "4. Summary should be concise but complete (around 120-220 Chinese chars when possible).\n" +
+                "5. Timeline should include 3-6 items in chronological order.\n" +
+                "6. If no explicit year is present, use stage-like labels.\n" +
+                "7. Do not fabricate unsupported facts.\n" +
+                "\n" +
+                "Person name: " + safeText(archiveName, "Unknown person") + "\n" +
+                "Person role: " + safeText(role, "Not provided") + "\n" +
+                "\n" +
+                "Document content:\n" +
+                truncate(documentText, 12000);
 
         String response = chatClient.prompt()
                 .user(prompt)

@@ -32,6 +32,16 @@ export async function appendTimeline(archiveId: string, payload: ArchiveTimeline
   return data;
 }
 
+export async function updateTimeline(archiveId: string, timelineId: string, payload: ArchiveTimelinePayload) {
+  const { data } = await http.put<ArchiveDetailResponse>(`/archives/${archiveId}/timeline/${timelineId}`, payload);
+  return data;
+}
+
+export async function deleteTimeline(archiveId: string, timelineId: string) {
+  const { data } = await http.delete<ArchiveDetailResponse>(`/archives/${archiveId}/timeline/${timelineId}`);
+  return data;
+}
+
 export async function generateSummaryFromDocument(archiveId: string, file: File) {
   const formData = new FormData();
   formData.append("file", file);

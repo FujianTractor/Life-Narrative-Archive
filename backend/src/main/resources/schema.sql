@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS app_users (
 
 CREATE TABLE IF NOT EXISTS archives (
     id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL,
     name VARCHAR(128) NOT NULL,
     age INTEGER NOT NULL,
     hometown VARCHAR(128),
@@ -18,7 +19,8 @@ CREATE TABLE IF NOT EXISTS archives (
     wish TEXT,
     tone VARCHAR(32),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    CONSTRAINT fk_archives_user FOREIGN KEY (user_id) REFERENCES app_users (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS archive_tags (
@@ -36,7 +38,8 @@ CREATE TABLE IF NOT EXISTS archive_supporters (
 CREATE TABLE IF NOT EXISTS archive_timelines (
     id VARCHAR(36) PRIMARY KEY,
     archive_id VARCHAR(36) NOT NULL,
-    year_label VARCHAR(16) NOT NULL,
+    year_label INTEGER NOT NULL,
+    location VARCHAR(128),
     title VARCHAR(128) NOT NULL,
     description TEXT NOT NULL,
     sort_order INTEGER NOT NULL,

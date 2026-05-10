@@ -8,11 +8,15 @@ import com.lifenarrative.archive.dto.ArchiveDtos.ArchiveSummary;
 import com.lifenarrative.archive.dto.ArchiveDtos.AssetBlock;
 import com.lifenarrative.archive.dto.ArchiveDtos.CreateArchiveRequest;
 import com.lifenarrative.archive.dto.ArchiveDtos.TimelineEntry;
+import com.lifenarrative.archive.dto.ArchiveDtos.TimelineUpdateRequest;
 import com.lifenarrative.archive.entity.ArchiveEntity;
 import com.lifenarrative.archive.entity.ArchiveTimelineEntity;
 import com.lifenarrative.archive.entity.AssetEntity;
+import com.lifenarrative.archive.entity.UserEntity;
+import com.lifenarrative.archive.exception.ForbiddenException;
 import com.lifenarrative.archive.exception.ResourceNotFoundException;
 import com.lifenarrative.archive.repository.ArchiveRepository;
+import com.lifenarrative.archive.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +25,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -33,25 +38,28 @@ public class ArchiveService {
     private static final String DEFAULT_TONE = "amber";
 
     private final ArchiveRepository archiveRepository;
+    private final UserRepository userRepository;
     private final DocumentTextExtractorService documentTextExtractorService;
     private final NarrativeGenerationService narrativeGenerationService;
     private final FileStorageService fileStorageService;
 
     public ArchiveService(
             ArchiveRepository archiveRepository,
+            UserRepository userRepository,
             DocumentTextExtractorService documentTextExtractorService,
             NarrativeGenerationService narrativeGenerationService,
             FileStorageService fileStorageService
     ) {
         this.archiveRepository = archiveRepository;
+        this.userRepository = userRepository;
         this.documentTextExtractorService = documentTextExtractorService;
         this.narrativeGenerationService = narrativeGenerationService;
         this.fileStorageService = fileStorageService;
     }
 
     @Transactional(readOnly = true)
-    public ArchiveListResponse listArchives() {
-        List<ArchiveEntity> archives = archiveRepository.findAllByOrderByUpdatedAtDesc();
+    public ArchiveListResponse listArchives(String userId) {
+        List<ArchiveEntity> archives = archiveRepository.findByUserIdOrderByUpdatedAtDesc(userId);
         List<ArchiveSummary> elders = archives.stream()
                 .map(this::toSummary)
                 .toList();
@@ -74,13 +82,17 @@ public class ArchiveService {
     }
 
     @Transactional(readOnly = true)
-    public ArchiveDetailResponse getArchive(String archiveId) {
-        return new ArchiveDetailResponse(toDetail(findArchive(archiveId)));
+    public ArchiveDetailResponse getArchive(String archiveId, String userId) {
+        return new ArchiveDetailResponse(toDetail(findArchiveByUserId(archiveId, userId)));
     }
 
     @Transactional
-    public ArchiveDetailResponse createArchive(CreateArchiveRequest request) {
+    public ArchiveDetailResponse createArchive(CreateArchiveRequest request, String userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
         ArchiveEntity archive = new ArchiveEntity();
+        archive.setUser(user);
         applyArchiveRequest(archive, request);
 
         ArchiveEntity savedArchive = archiveRepository.save(archive);
@@ -88,8 +100,8 @@ public class ArchiveService {
     }
 
     @Transactional
-    public ArchiveDetailResponse updateArchive(String archiveId, CreateArchiveRequest request) {
-        ArchiveEntity archive = findArchive(archiveId);
+    public ArchiveDetailResponse updateArchive(String archiveId, CreateArchiveRequest request, String userId) {
+        ArchiveEntity archive = findArchiveByUserId(archiveId, userId);
         applyArchiveRequest(archive, request);
 
         ArchiveEntity savedArchive = archiveRepository.save(archive);
@@ -97,11 +109,12 @@ public class ArchiveService {
     }
 
     @Transactional
-    public ArchiveDetailResponse appendTimeline(String archiveId, AppendTimelineRequest request) {
-        ArchiveEntity archive = findArchive(archiveId);
+    public ArchiveDetailResponse appendTimeline(String archiveId, AppendTimelineRequest request, String userId) {
+        ArchiveEntity archive = findArchiveByUserId(archiveId, userId);
 
         ArchiveTimelineEntity timeline = new ArchiveTimelineEntity();
-        timeline.setYearLabel(request.year().trim());
+        timeline.setYearLabel(Integer.parseInt(request.year().trim()));
+        timeline.setLocation(normalizeText(request.location()));
         timeline.setTitle(request.title().trim());
         timeline.setDescription(request.description().trim());
         timeline.setSortOrder(archive.getTimelines().size() + 1);
@@ -112,8 +125,41 @@ public class ArchiveService {
     }
 
     @Transactional
-    public ArchiveDetailResponse generateSummaryFromDocument(String archiveId, MultipartFile file) throws IOException {
-        ArchiveEntity archive = findArchive(archiveId);
+    public ArchiveDetailResponse updateTimeline(String archiveId, String timelineId, TimelineUpdateRequest request, String userId) {
+        ArchiveEntity archive = findArchiveByUserId(archiveId, userId);
+
+        ArchiveTimelineEntity timeline = archive.getTimelines().stream()
+                .filter(t -> t.getId().equals(timelineId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Timeline entry not found"));
+
+        timeline.setYearLabel(Integer.parseInt(request.year().trim()));
+        timeline.setLocation(normalizeText(request.location()));
+        timeline.setTitle(request.title().trim());
+        timeline.setDescription(request.description().trim());
+
+        ArchiveEntity savedArchive = archiveRepository.save(archive);
+        return new ArchiveDetailResponse(toDetail(savedArchive));
+    }
+
+    @Transactional
+    public ArchiveDetailResponse deleteTimeline(String archiveId, String timelineId, String userId) {
+        ArchiveEntity archive = findArchiveByUserId(archiveId, userId);
+
+        ArchiveTimelineEntity timeline = archive.getTimelines().stream()
+                .filter(t -> t.getId().equals(timelineId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Timeline entry not found"));
+
+        archive.getTimelines().remove(timeline);
+
+        ArchiveEntity savedArchive = archiveRepository.save(archive);
+        return new ArchiveDetailResponse(toDetail(savedArchive));
+    }
+
+    @Transactional
+    public ArchiveDetailResponse generateSummaryFromDocument(String archiveId, MultipartFile file, String userId) throws IOException {
+        ArchiveEntity archive = findArchiveByUserId(archiveId, userId);
         validateDocumentFile(file);
 
         String documentText = documentTextExtractorService.extractText(file);
@@ -131,8 +177,8 @@ public class ArchiveService {
     }
 
     @Transactional
-    public ArchiveDetailResponse uploadImage(String archiveId, MultipartFile file) throws IOException {
-        ArchiveEntity archive = findArchive(archiveId);
+    public ArchiveDetailResponse uploadImage(String archiveId, MultipartFile file, String userId) throws IOException {
+        ArchiveEntity archive = findArchiveByUserId(archiveId, userId);
         validateImageFile(file);
 
         FileStorageService.StoredFile storedFile = fileStorageService.storeArchiveImage(archiveId, file);
@@ -151,8 +197,8 @@ public class ArchiveService {
     }
 
     @Transactional
-    public ArchiveDetailResponse uploadVideo(String archiveId, MultipartFile file) throws IOException {
-        ArchiveEntity archive = findArchive(archiveId);
+    public ArchiveDetailResponse uploadVideo(String archiveId, MultipartFile file, String userId) throws IOException {
+        ArchiveEntity archive = findArchiveByUserId(archiveId, userId);
         validateVideoFile(file);
 
         FileStorageService.StoredFile storedFile = fileStorageService.storeArchiveVideo(archiveId, file);
@@ -188,6 +234,11 @@ public class ArchiveService {
                 .orElseThrow(() -> new ResourceNotFoundException("Archive not found"));
     }
 
+    private ArchiveEntity findArchiveByUserId(String archiveId, String userId) {
+        return archiveRepository.findByIdAndUserId(archiveId, userId)
+                .orElseThrow(() -> new ForbiddenException("Access denied to this archive"));
+    }
+
     private ArchiveSummary toSummary(ArchiveEntity archive) {
         return new ArchiveSummary(
                 archive.getId(),
@@ -207,7 +258,14 @@ public class ArchiveService {
 
     private ArchiveDetail toDetail(ArchiveEntity archive) {
         List<TimelineEntry> timeline = archive.getTimelines().stream()
-                .map(entry -> new TimelineEntry(entry.getYearLabel(), entry.getTitle(), entry.getDescription()))
+                .sorted(Comparator.comparingInt(ArchiveTimelineEntity::getYearLabel))
+                .map(entry -> new TimelineEntry(
+                        entry.getId(),
+                        entry.getYearLabel(),
+                        normalizeText(entry.getLocation()),
+                        entry.getTitle(),
+                        entry.getDescription()
+                ))
                 .toList();
 
         List<Map<String, String>> images = archive.getAssets().stream()
@@ -252,10 +310,17 @@ public class ArchiveService {
 
         int sortOrder = archive.getTimelines().size();
         for (NarrativeGenerationService.TimelineDraft draft : drafts) {
-            String year = normalizeText(draft.year());
+            String yearStr = normalizeText(draft.year());
             String title = normalizeText(draft.title());
             String description = normalizeText(draft.description());
-            if (year.isBlank() || title.isBlank() || description.isBlank()) {
+            if (yearStr.isBlank() || title.isBlank() || description.isBlank()) {
+                continue;
+            }
+
+            int year;
+            try {
+                year = Integer.parseInt(yearStr);
+            } catch (NumberFormatException e) {
                 continue;
             }
 
@@ -266,6 +331,7 @@ public class ArchiveService {
 
             ArchiveTimelineEntity timeline = new ArchiveTimelineEntity();
             timeline.setYearLabel(year);
+            timeline.setLocation("");
             timeline.setTitle(title);
             timeline.setDescription(description);
             timeline.setSortOrder(++sortOrder);
@@ -273,8 +339,8 @@ public class ArchiveService {
         }
     }
 
-    private String timelineKey(String year, String title, String description) {
-        return normalizeText(year) + "|" + normalizeText(title) + "|" + normalizeText(description);
+    private String timelineKey(int year, String title, String description) {
+        return year + "|" + normalizeText(title) + "|" + normalizeText(description);
     }
 
     private void validateDocumentFile(MultipartFile file) {

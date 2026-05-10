@@ -5,10 +5,22 @@ delete from archive_supporters;
 delete from archives;
 delete from app_users;
 
+insert into app_users (
+    id, username, display_name, password_hash, created_at, updated_at
+) values (
+    'user-demo-1',
+    'demo',
+    'Demo User',
+    '$2b$10$ibEosuhYa6Is3CjszUqVguVsrtyxpemd6casE3agsBr.iOKmFoaYq',
+    TIMESTAMP WITH TIME ZONE '2026-04-05T00:00:00Z',
+    TIMESTAMP WITH TIME ZONE '2026-04-05T00:00:00Z'
+);
+
 insert into archives (
-    id, name, age, hometown, community, role, summary, wish, tone, created_at, updated_at
+    id, user_id, name, age, hometown, community, role, summary, wish, tone, created_at, updated_at
 ) values (
     'elder-demo-1',
+    'user-demo-1',
     'Zhang Guilan',
     79,
     'Guangyuan, Sichuan',
@@ -30,12 +42,13 @@ insert into archive_supporters (archive_id, supporter) values
     ('elder-demo-1', '女儿');
 
 insert into archive_timelines (
-    id, archive_id, year_label, title, description, sort_order, created_at
+    id, archive_id, year_label, location, title, description, sort_order, created_at
 ) values
     (
         'timeline-demo-1',
         'elder-demo-1',
         '1964',
+        'Guangyuan',
         '第一次进城工作',
         '离开家乡后，她开始一边工作一边写日记，记录新的城市生活。',
         1,
@@ -45,6 +58,7 @@ insert into archive_timelines (
         'timeline-demo-2',
         'elder-demo-1',
         '2024',
+        'Chengdu',
         '开始使用智能手机',
         '她逐渐学会扫码、视频通话，也开始尝试把老照片讲给家人听。',
         2,

@@ -25,8 +25,11 @@ public class ArchiveTimelineEntity {
     @JoinColumn(name = "archive_id", nullable = false)
     private ArchiveEntity archive;
 
-    @Column(name = "year_label", nullable = false, length = 16)
-    private String yearLabel;
+    @Column(name = "year_label", nullable = false)
+    private Integer yearLabel;
+
+    @Column(length = 128)
+    private String location;
 
     @Column(nullable = false, length = 128)
     private String title;
@@ -53,12 +56,20 @@ public class ArchiveTimelineEntity {
         this.archive = archive;
     }
 
-    public String getYearLabel() {
+    public Integer getYearLabel() {
         return yearLabel;
     }
 
-    public void setYearLabel(String yearLabel) {
+    public void setYearLabel(Integer yearLabel) {
         this.yearLabel = yearLabel;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public String getTitle() {
@@ -83,5 +94,9 @@ public class ArchiveTimelineEntity {
 
     public void setSortOrder(Integer sortOrder) {
         this.sortOrder = sortOrder;
+    }
+
+    public String getId() {
+        return id;
     }
 }

@@ -15,11 +15,11 @@ export default defineConfig({
     host: "0.0.0.0",
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:8080",
+        target: "http://127.0.0.1:18080",
         changeOrigin: true,
       },
       "/uploads": {
-        target: "http://127.0.0.1:8080",
+        target: "http://127.0.0.1:18080",
         changeOrigin: true,
       },
     },
